@@ -1,0 +1,78 @@
+install spreadsheet:
+https://lms.im/doit/install-phpspreadsheet-under-xampp.html
+
+
+used:
+
+ajax
+spreadsheet
+highcharts
+jquery
+json
+
+
+
+log：
+
+-简单的html界面+css
+-html输入窗口（input，button，form）
+-html以按钮触发JavaScript脚本（onclick）
+-javascript获取并显示html界面输入的内容
+-php获取并显示html界面输入的内容
+-JavaScript动态html页面（script对html界面的修改）
+-以JavaScript动态化html输入窗口（编辑/添加/删除coursework和model的创建）（未上传到数据库）（jquery的应用）
+-简单图标的生成（highcharts的应用）
+-php脚本访问mysql服务器
+-php脚本读写mysql数据库内容
+-上传excel内model内容到mysql的php脚本（自动上传并小幅度修正和自动计算expected hrs (spreadsheet的应用))
+-html+php+javascript的网站，实现了：
+	三种语言内的数据交流，
+	mysql数据库内数据的读取，
+	mysql数据库的搜索，
+	读到的数据的显示（ajax），
+	以该数据生成图表（highcharts,json），
+-excel内program的上传
+-站内界面小改和函数结构大改
+-网站内的数据整理并提供选择列表
+-整体界面小幅度美化
+-添加清空显示/clear按钮
+
+-优化删除表格函数（取消显示)
+-navigator锁定，
+
+-modify函数初试+自动修正expected_hrs(未上传至数据库)
+-cancel函数（取消修改动作)
+-优化所有函数
+-modify函数完成（上传至数据库)
+
+-图表改成stack area
+-DL区分A组和B组，并且同步生成A，B两个图表
+-重新架构数据库（以JSON格式保存coursework和modules）
+-重新上传数据至数据库
+-重新创建PHP连数据库接口
+-重新匹配script和html接口
+-优化生成图表时获取数据的方法
+-重新架构显示的table
+-显示的table添加时间总览表
+-数据库增加时间总览表需要的数据结构（contact_hrs,study_hrs,timable_CA）
+-修bug
+-
+
+
+接下来要做的:
+
+-stack area /
+-拓展数据库 分group /
+-拓展modules表格 -
+-添加的module是否存在coursework的画图条件
+-独立module total线 
+-优化后端登录
+-CSS
+bonus:
+-数据收集表格
+-数据库新建对应的数据列表 
+-数据的处理（不是很知道该咋弄）
+-数据读取生成叠加表
+
+extra-bonus:
+-全代码优化/美化 （因为现在的代码是真的丑）

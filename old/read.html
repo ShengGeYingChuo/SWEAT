@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utc-8" />
+        
+		<!-- import css -->
+		<link rel="stylesheet" type="text/css" href="read.css">
+        
+		<!-- import script -->
+		<script language="javascript" src="Highcharts.js"></script>
+		<script language="javascript" src="jquery.js"></script>
+		<script>
+			var old_code=new Array();
+			var old_profile=new Array();
+			m_list();
+			
+			
+			function get_prof(prof){
+				var len = document.getElementById("tab").children.length;
+				for (var i=0;i<len;i++){
+					var tmp = document.getElementById("tab").getElementsByTagName("section")[i];
+					if(tmp.id==prof){
+						return tmp;
+					}
+				}
+				console.log("error:"+prof+" no found.");
+				return 0;
+			}
+			
+			
+			
+			function del_prof(prof){
+				if(confirm("Are you sure to delete this program? this action are unreturnable!")){
+					var sql='DELETE FROM `profiles` WHERE name="'+prof+'"';
+					if (window.XMLHttpRequest){
+						// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
+						xmlhttp=new XMLHttpRequest();
+					}else{
+						// IE6, IE5 浏览器执行代码
+						xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+					}
+					xmlhttp.onreadystatechange=function(){
+					
+						if (xmlhttp.readyState==4 && xmlhttp.status==200){
+							if(xmlhttp.responseText==""){
+							}else{
+								window.alert("delete success");
+							}
+						}
+					}
+					xmlhttp.open("GET","modify.php?code="+sql,true);
+					xmlhttp.send();
+				}
+			}
+			
+			
+			function del_mod(mod){
+				if(confirm("Are you sure to delete this program? this action are unreturnable!")){
+					var sql='DELETE FROM `modules` WHERE name="'+mod+'"';
+					if (window.XMLHttpRequest){
+						// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
+						xmlhttp=new XMLHttpRequest();
+					}else{
+						// IE6, IE5 浏览器执行代码
+						xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+					}
+					xmlhttp.onreadystatechange=function(){
+					
+						if (xmlhttp.readyState==4 && xmlhttp.status==200){
+							if(xmlhttp.responseText==""){
+							}else{
+								window.alert("delete success");
+							}
+						}
+					}
+					xmlhttp.open("GET","modify.php?code="+sql,true);
+					xmlhttp.send();
+				}
+			}
+			
+			function m_list(){
+				if (window.XMLHttpRequest){
+					// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
+					xmlhttp=new XMLHttpRequest();
+				}else{
+					// IE6, IE5 浏览器执行代码
+					xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+				}
+				xmlhttp.onreadystatechange=function(){
+				
+					if (xmlhttp.readyState==4 && xmlhttp.status==200){
+						if(xmlhttp.responseText==""){
+						}else{
+							document.getElementById("list").innerHTML+=xmlhttp.responseText;
+						}
+					}
+				}
+				xmlhttp.open("GET","getsitelist_mysql.php",true);
+				xmlhttp.send();
+			}
+			
+			function add(val){
+
+				var new_code=document.querySelector('[name="search_code"]').value;
+				
+				if(new_code=="" && !val){ // if empty
+					return;
+				}
+				
+				if(val){
+					if(typeof val == "string"){
+						if(old_code.includes(val)){return;}
+						var sql="SELECT * FROM modules WHERE code='"+val+"'";
+						old_code.push(val);
+					}else{
+						var sql="SELECT * FROM modules WHERE ";
+						if(old_code.includes()){return;}
+						old_profile.push(val[0]);
+						for(var i=1;i<val.length;i++){
+							sql+="code='"+val[i]+"'";
+							if(i<(val.length-1)){sql+=" OR ";}
+						}
+					}
+				}else{
+					if(old_code.includes(new_code)){return;}
+					var sql="SELECT * FROM modules WHERE code='"+new_code+"'";
+					old_code.push(new_code);
+				}
+				sql+=";";
+				
+				if (window.XMLHttpRequest){
+					// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
+					xmlhttp=new XMLHttpRequest();
+				}else{
+					// IE6, IE5 浏览器执行代码
+					xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+				}
+				xmlhttp.onreadystatechange=function(){
+				
+					if (xmlhttp.readyState==4 && xmlhttp.status==200){
+						if(xmlhttp.responseText==""){
+						}else{
+							document.getElementById("tab").innerHTML+=xmlhttp.responseText;
+							draw(data());
+						}
+					}
+				}
+				if(typeof val=="object"){
+					xmlhttp.open("GET","getsite_mysql.php?code="+sql+"&prof="+val[0]+"&cancel=0",true);
+				}else{
+					xmlhttp.open("GET","getsite_mysql.php?code="+sql+"&prof="+val+new_code+"&cancel=0",true);
+				}
+				xmlhttp.send();
+			}
+			
+			
+			
+			function obj_remove(code,prof){
+				// localisation of element
+				
+				var tmp = get_prof(prof);
+				
+				// delete element
+				if(old_code.includes(code)){
+					tmp.remove();
+					old_code.splice(old_code.indexOf(code),1);
+				}else{
+					var r_obj = tmp.querySelector("#"+code);
+					r_obj.remove();
+				}
+				
+				if(old_code.length==0 && old_profile.length==0){
+				document.getElementById("graph").innerHTML="";
+				}else{
+					if(auto_prof_remmove(prof)){;
+						draw(data());
+					}
+				}
+			}
+			
+			function auto_prof_remmove(prof){
+				var tmp = get_prof(prof);
+					if(tmp.getElementsByTagName("table")[0] == null){
+						prof_remove(prof);
+						return 0;
+					}else{
+						return 1;
+					}
+			}
+			
+			function prof_remove(prof){
+				var tmp = get_prof(prof);
+				tmp.remove();
+					
+				if(old_profile.includes(prof)){
+					old_profile.splice(old_profile.indexOf(prof),1);
+				}else{
+					old_code.splice(old_code.indexOf(prof),1);
+				}
+					
+				if(old_code.length==0 && old_profile.length==0){
+				document.getElementById("graph").innerHTML="";
+				}else{
+					draw(data());
+				}
+			}
+			
+			function clean(){
+				if(document.querySelector("#tab").innerHTML!="" && document.querySelector("#graph").innerHTML!=""){
+					document.querySelector("#tab").innerHTML="";
+					document.querySelector("#graph").innerHTML="";
+					old_code=[];
+					old_profile=[];
+				}
+			}
+			
+			function modify(code,prof){
+				
+				var obj = get_prof(prof).querySelector("#"+code);
+				var nb=parseInt(obj.getElementsByTagName("tr")[2].getElementsByTagName("th")[1].innerHTML)+4;
+				
+				var tmp = obj.getElementsByTagName("tr")[0].getElementsByTagName("th")[0].innerHTML;
+				obj.getElementsByTagName("tr")[0].getElementsByTagName("th")[0].innerHTML="<input type='text' value='"+tmp+"' style='width:90%; background-color:transparent;'></input>";
+				
+				for(var i=0;i<5;i++){
+					if(i==3){
+						var tmp = obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[i].innerHTML;
+						obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[i].innerHTML="<input type='text' value='"+tmp+"' style='width:90%; background-color:transparent;' onchange='exp_hrs("+'"'+code+'"'+","+'"'+prof+'"'+","+1+");'></input>";
+					}else if(i==2){
+						var tmp = obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[i].innerHTML;
+						obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[i].innerHTML="<input type='number' value='"+tmp+"' style='width:90%; background-color:transparent;' ></input>";
+					}else{
+						var tmp = obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[i].innerHTML;
+						obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[i].innerHTML="<input type='text' value='"+tmp+"' style='width:90%; background-color:transparent;'></input>";
+					}
+				}
+				
+				for(var i=4;i<nb;i++){
+					obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[0].innerHTML="<button type='button' onclick='del_cs("+'"'+code+'"'+","+'"'+prof+'"'+","+i+")'>delete this cursework</button>";
+					
+					var tmp = obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[1].innerHTML;
+					obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[1].innerHTML="<input type='text' value='"+tmp+"' style='width:90%; background-color:transparent;'></input>";
+
+					var tmp = obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[2].innerHTML;
+					obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[2].innerHTML="<input type='number' value='"+tmp+"' style='width:90%; background-color:transparent;' onchange='exp_hrs("+'"'+code+'"'+","+'"'+prof+'"'+","+i+");'></input>";
+					
+					var tmp = obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[4].innerHTML;
+					obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[4].innerHTML="<input type='number' value='"+tmp+"' style='width:90%; background-color:transparent;'></input>";
+
+				}
+
+			obj.getElementsByTagName("tr")[0].getElementsByTagName("th")[6].getElementsByTagName("button")[1].style.display="none";
+			obj.getElementsByTagName("tr")[0].getElementsByTagName("th")[6].innerHTML+="<button type='button' onclick='reload("+'"'+code+'"'+","+'"'+prof+'"'+");'>cancel</button>";
+			obj.getElementsByTagName("tr")[0].getElementsByTagName("th")[6].innerHTML+="<button type='button' onclick='upload("+'"'+code+'"'+","+'"'+prof+'"'+");'>confirm</button><br />";
+			obj.getElementsByTagName("tr")[0].getElementsByTagName("th")[6].innerHTML+="<button type='button' onclick='new_cs("+'"'+code+'"'+","+'"'+prof+'"'+");'>new coursework</button>";
+			}
+			
+			function del_cs(code,prof,target){
+				if(confirm("Are you sure to delete this coursework?")){
+					var obj = get_prof(prof).querySelector("#"+code);
+					var nb = parseInt(obj.getElementsByTagName("tr")[2].getElementsByTagName("th")[1].innerHTML)+3;
+					var but = obj.getElementsByTagName("tr")[target].getElementsByTagName("td")[0].innerHTML;
+					obj.getElementsByTagName("tr")[target].remove();
+					obj.getElementsByTagName("tr")[0].getElementsByTagName("th")[0].rowSpan--;
+					obj.getElementsByTagName("tr")[0].getElementsByTagName("th")[6].rowSpan--;
+					obj.getElementsByTagName("tr")[2].getElementsByTagName("th")[1].innerHTML=parseInt(obj.getElementsByTagName("tr")[2].getElementsByTagName("th")[1].innerHTML)-1;
+					for(var i=target;i<nb;i++){
+						obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[0].innerHTML=but;
+						obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[1].id="C"+(i-3)+"_name";
+						obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[2].id="C"+(i-3)+"_weitghing";
+						obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[3].id="C"+(i-3)+"_DL";
+						if(i+1<nb){
+							but = obj.getElementsByTagName("tr")[i+1].getElementsByTagName("td")[0].innerHTML;
+						}
+					}
+				}
+			}
+			
+			function new_cs(code,prof){
+				var obj = get_prof(prof).querySelector("#"+code);
+				row=obj.getElementsByTagName("tr")[0].getElementsByTagName("th")[0].rowSpan +1;
+				nb=row-4;
+				obj.getElementsByTagName("tr")[0].getElementsByTagName("th")[0].rowSpan++;
+				obj.getElementsByTagName("tr")[0].getElementsByTagName("th")[6].rowSpan++;
+				obj.getElementsByTagName("tr")[2].getElementsByTagName("th")[1].innerHTML=parseInt(obj.getElementsByTagName("tr")[2].getElementsByTagName("th")[1].innerHTML)+1;
+				obj.getElementsByTagName("tbody")[0].innerHTML+="<tr><td><button type='button' onclick='del_cs("+'"'+code+'"'+","+'"'+prof+'"'+","+(nb+3)+")'>delete this cursework</button></td><td id='C"+nb+"_name'><input type='text' value='' style='width:90%; background-color:transparent;'></input></td><td id='C"+nb+"_weitghing'><input type='number' value='' style='width:90%; background-color:transparent;' onchange='exp_hrs("+'"'+code+'"'+","+'"'+prof+'"'+","+(nb+3)+","+(nb+4)+");'></input></td><td id='C"+nb+"_expct_hrs'></td><td id='C"+nb+"_DL'><input type='number' value='' style='width:90%; background-color:transparent;'></input></td></tr>";
+			}
+			
+			function exp_hrs(code,prof,n){
+
+				var obj = get_prof(prof).querySelector("#"+code);
+				var nb=parseInt(obj.getElementsByTagName("tr")[2].getElementsByTagName("th")[1].innerHTML)+4;
+				if(n==1){
+					for(var i=4;i<nb;i++){
+						var credits = parseFloat(obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[3].getElementsByTagName("input")[0].value);
+						var weitghing = parseInt(obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[2].getElementsByTagName("input")[0].value);
+						obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[3].innerHTML= credits*weitghing/10;
+					}
+				}else{
+					var credits = parseFloat(obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[3].getElementsByTagName("input")[0].value);
+					var weitghing = parseInt(obj.getElementsByTagName("tr")[n].getElementsByTagName("td")[2].getElementsByTagName("input")[0].value);
+					obj.getElementsByTagName("tr")[n].getElementsByTagName("td")[3].innerHTML= credits*weitghing/10;
+				}
+			}
+			
+			function reload(code,prof){
+			
+				var sql="SELECT * FROM modules WHERE code='"+code+"';";
+				
+				var len = document.getElementById("tab").children.length;
+				for (var i=0;i<len;i++){
+					var tmp = document.getElementById("tab").getElementsByTagName("section")[i];
+					if(tmp.id==prof){
+						break;
+					}
+				}
+				var obj = tmp.querySelector("#"+code);
+				
+				
+				if (window.XMLHttpRequest){
+					// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
+					xmlhttp=new XMLHttpRequest();
+				}else{
+					// IE6, IE5 浏览器执行代码
+					xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+				}
+				xmlhttp.onreadystatechange=function(){
+				
+					if (xmlhttp.readyState==4 && xmlhttp.status==200){
+						if(xmlhttp.responseText==""){
+						}else{
+							obj.innerHTML=xmlhttp.responseText;
+							draw(data());
+						}
+					}
+				}
+
+				xmlhttp.open("GET","getsite_mysql.php?code="+sql+"&prof="+prof+"&cancel=1",true);
+				xmlhttp.send();
+			}
+			
+			function upload(code,prof){
+				if(confirm("Confirm your update to database?")){
+					var obj = get_prof(prof).querySelector("#"+code);
+					
+					
+					var sql = "UPDATE modules SET ";
+					var nb_coursework=parseInt(obj.getElementsByTagName("tr")[2].getElementsByTagName("th")[1].innerHTML);
+					var j=nb_coursework;
+					
+					var n_prog = new Array();
+					sql+="code="+'"'+obj.getElementsByTagName("tr")[0].getElementsByTagName("th")[0].children[0].value+'", ';
+					sql+="name="+'"'+obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[0].children[0].value+'", ';
+					sql+="co_odinator="+'"'+obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[1].children[0].value+'", ';
+					sql+="semester="+'"'+obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[2].children[0].value+'", ';
+					sql+="Credits="+'"'+obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[3].children[0].value+'", ';
+					sql+="CA="+'"'+obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[4].children[0].value+'", ';
+					
+					for(var i=0;i<j;i++){  //重新计算cs数量，不计无效空行
+						if(obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[1].children[0].value=="" 
+							&& (obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[2].children[0].value=="" || obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[2].children[0].value==0)
+							&& (obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[3].innerHTML=="" || obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[3].innerHTML==0)
+							&& (obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[4].children[0].value=="" || obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[4].children[0].value)){
+							obj.getElementsByTagName("tr")[4+i].remove();
+							i--;
+							j--;
+							nb_coursework--;
+						}
+					}
+					
+					sql+="Nb_of_Coursework="+'"'+nb_coursework+'"';
+					if(nb_coursework>0){
+						sql+=', ';
+						for(var i=0;i<nb_coursework;i++){
+							if(obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[1].children[0].value=="" 
+								&& obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[2].children[0].value==""
+								&& obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[3].innerHTML==""
+								&& obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[4].children[0].value==""){
+							}else{
+								sql+="C"+(i+1)+"_name="+'"'+obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[1].children[0].value+'", ';
+								sql+="C"+(i+1)+"_weitghing="+'"'+obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[2].children[0].value+'", ';
+								sql+="C"+(i+1)+"_expct_hrs="+'"'+obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[3].innerHTML+'", ';
+								sql+="C"+(i+1)+"_DL="+'"'+obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[4].children[0].value+'", ';
+							}
+						}
+						
+						for(;i<9;i++){
+							sql+="C"+(i+1)+"_name="+"NULL, ";
+							sql+="C"+(i+1)+"_weitghing="+"NULL, ";
+							sql+="C"+(i+1)+"_expct_hrs="+"NULL, ";
+							sql+="C"+(i+1)+"_DL="+"NULL";
+							if(i+1<9){
+								sql+=', ';
+							}else{
+								sql+=' ';
+							}
+						}
+					}
+					
+					sql+="WHERE code="+'"'+code+'"';
+
+					if (window.XMLHttpRequest){
+						// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
+						xmlhttp=new XMLHttpRequest();
+					}else{
+						// IE6, IE5 浏览器执行代码
+						xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+					}
+					xmlhttp.onreadystatechange=function(){
+					
+						if (xmlhttp.readyState==4 && xmlhttp.status==200){
+							reload(code,prof);
+						}
+					}
+
+					xmlhttp.open("GET","modify.php?code="+sql,true);
+					xmlhttp.send();
+				}
+			}
+			
+			function data(){
+				var series = [];
+				for(var i=0;i<old_code.length;i++){
+					code=old_code[i];
+					var nb_coursework=parseInt(document.querySelector("#"+code).querySelector("#nb_coursework").innerHTML);
+					for(var j=1;j<=nb_coursework;j++){
+						var n={name:"",data:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]};
+						
+						n.name=code+" "+document.querySelector("#"+code).querySelector("#C"+j+"_name").innerHTML;
+						
+						var hrs=parseInt(document.querySelector("#"+code).querySelector("#C"+j+"_expct_hrs").innerHTML);
+						
+						n.data[parseInt(document.querySelector("#"+code).querySelector("#C"+j+"_DL").innerHTML)-1]+=hrs;
+						series.push(n);
+					}
+				}
+				
+				
+				for(var i=0;i<old_profile.length;i++){
+					var n={name:"",data:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]};
+					var len = document.querySelector("#"+old_profile[i]).childElementCount;
+					var modulecount = 0;
+					for(var j=0;j<len;j++){
+						if(document.querySelector("#"+old_profile[i]).children[j].tagName=="TABLE"){
+							modulecount ++;
+						}
+					}
+					n.name=old_profile[i];
+					
+
+					for(var j=1;j<=modulecount;j++){
+						var module=document.getElementById(old_profile[i]).getElementsByTagName("table")[j-1];
+						var nb_coursework=parseInt(module.querySelector("#nb_coursework").innerHTML);
+						var m={name:"",data:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]};
+						m.name=module.children[0].children[0].children[0].innerHTML;
+						
+						for(var k=1;k<=nb_coursework;k++){
+						var hrs=parseInt(module.querySelector("#C"+k+"_expct_hrs").innerHTML);
+						m.data[parseInt(module.querySelector("#C"+k+"_DL").innerHTML)-1]+=hrs;
+						n.data[parseInt(module.querySelector("#C"+k+"_DL").innerHTML)-1]+=hrs;
+						}
+						series.push(m);
+					}
+					//series.push(n);
+				}
+				return (series);
+			}
+			
+			
+			
+			
+			function draw(series){
+				var chart = {
+					type: 'area'
+				};
+			
+				var title = {
+					text: 'SWEAT'
+				};
+				
+				var plotOptions = {
+					area: {
+						stacking: 'normal',
+						lineColor: '#666666',
+						lineWidth: 1,
+						marker: {
+							lineWidth: 1,
+							lineColor: '#666666'
+						}
+					}
+				};
+					
+				var subtitle ={
+					text: ''
+				};
+			
+
+				var xAxis = {
+					categories: ['week 1','week 2','week 3','week 4','week 5','week 6','week 7'
+					,'week 8','week 9','week 10','week 11','week 12','week 13','week 14','week 15'
+					,'week 16']
+				};
+				
+				var yAxis = {
+					title: {
+						text: 'Expected hours'
+					},
+					poplotLines:[{
+						value: 0,
+						width: 1,
+						color: '#808080'
+					}],
+					categories: ['0','1','2','3','4','5','6','7','8','9','10','11','12','13','14']
+				};
+					
+				var tooltip = {
+					valueSuffix: 'hrs'
+					}
+
+				var legend = {
+					layout: 'vertical',
+					align: 'right',
+					verticalAlign: 'middle',
+					borderWidth: 0
+					};
+					
+
+
+				var json ={};
+				json.chart = chart;
+				json.title = title;
+				json.plotOptions = plotOptions;
+				json.subtitle = subtitle;
+				json.xAxis = xAxis;
+				json.yAxis = yAxis;
+				json.tooltip = tooltip;
+				json.legend = legend;
+				json.series = series;
+				
+				Highcharts.chart('graph',json);
+			}
+
+		</script>	
+		<!-- set website title -->
+		<title>test</title>
+        
+    </head>
+    <body>
+		<!-- header -->
+        <header style="width: 100%; height: 100px; text-align: center;">
+        <img src="img/full-colour.svg" style="max-height:100px;max-width:200px;display:flex;content-justify:left;margin-top:50px;margin-left:100px;">
+        </header>
+		
+		<h2 style="width:100%;height:20px;background-color:#212b58;">
+		</h1>
+		
+		<main style="display:flex;">
+			<nav style="flex-direction:column; width: 250px; background-color: white;">
+				<form style="margin-left:10px;">
+					<input type="text" style="width:90%;" name="search_code" />
+					<button style='background-color:white;border-bottom:1px solid #1E1E1E;' type="button" onclick="add()">search & add</button>
+					<button style='background-color:white;border-bottom:1px solid #1E1E1E;' type="button" onclick="clean()">clear</button>
+				</form>
+				<section style="margin-left:10px;border-bottom:1px solid #1E1E1E;" id="list">
+				</section>
+			</br></br>
+			</nav>
+			<section id="data" style="margin-left:150px;margin-right:50px; min-height:500px;width:65%;">
+				<div id="tab" ></div><br><br>
+				<div id="graph" style="margin-left:50px;" ></div>
+			</section>
+		</main>
+		
+		<footer style="background-color:black; width:100%;height:100px;">
+		</footer>
+    </body>
+</html>

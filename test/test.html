@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utc-8" />
+        
+		<!-- import css -->
+        <link rel="stylesheet" href="test.css" />
+        
+		<!-- import script -->
+        <script language="javascript" src="test.js"></script>
+		<script language="javascript" src="graphtest.js"></script>
+		<script language="javascript" src="Highcharts.js"></script>
+		
+		<!-- set website title -->
+		<title>test</title>
+        
+    </head>
+    <body>
+		<!-- header -->
+        <header>
+            <p>header</p>
+        </header>
+        
+		<!-- formular -->
+        <form action="" onsubmit="return validete()" method="post">
+        
+			<!-- input main info -->
+            <div id="main">
+                <br />
+                    
+                <label for="title">Module code:</label>
+                <input type="text" name="m_code" required /></br>
+                    
+                <label for="Module">Module name:</label>
+                <input type="text" name="module" required /></br>
+            
+                <label for="Co-ordinator">Co-ordinator:</label>
+                <input type="text" name="co_ordinator" required /></br>
+                
+                <label for="Credits">Credits:</label>
+                <input type="number" name="credits" onchange="expected_hour(0)" required /></br>
+                    
+                <label for="CA">CA(%):</label>
+                <input type="number" name="CA" required /></br>
+				
+				<label for="Semester">Study period:</label>
+                <select name="s_per">
+				<option value="sem_1" >semester 1</option>
+				<option value="sem_2" >semester 2</option>
+				<option value="fully" >full year</option>
+				</select><p id="sel_w" style="color:red"></p>
+				
+				<p id="wei_w" style="color:red"></p>
+            
+                <br />
+            </div>
+            
+			<!-- input courseworks -->
+            <div id="comp">
+                <table>
+                    <thead id="thd">
+                    </thead>
+                    <tbody id="tbd">
+                    </tbody>
+                </table>
+            </div>
+			
+			<!-- add coursework button -->
+            <button type="button" onclick="add()">add a coursework</button>
+			
+			<!-- submit button -->
+            <input type="submit" value="upload" />
+        </form>
+		
+		<!-- highcharts graph -->
+		<div id="graph">
+			<button onclick='graph()'>graph</button>
+		</div>
+    </body>
+</html>

@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utc-8" />
+		<link rel="icon" href="./img/SWEAT Inverted Color.SVG">
+		<title>SWEAT</title>
+        
+		<!-- import css -->
+		<link rel="stylesheet" type="text/css" href="read.css">
+        
+		<!-- import script -->
+		<script language="javascript" src="Highcharts.js"></script>
+		<script language="javascript" src="jquery.js"></script>
+		<script src="https://code.highcharts.com/highcharts-more.js"></script>
+		<script src="https://code.highcharts.com/modules/exporting.js"></script>
+		<script src="https://code.highcharts.com/modules/export-data.js"></script>
+		<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.8/xlsx.full.min.js"></script>
+			
+		<script>
+			var old_profile=new Array();
+			var startDate=new Date("2023-09-27");
+			var g2_data;
+			m_list();
+			
+			
+			function get_prof(prof){
+				var len = document.getElementById("tab").children.length;
+				for (var i=0;i<len;i++){
+					var tmp = document.getElementById("tab").children[i];
+					if(tmp.id==prof){
+						return tmp;
+					}if(tmp.id=="s_"+prof){
+						return tmp;
+					}
+				}
+				console.log("error:"+prof+" no found.");
+				return 0;
+			}
+			
+			function get_modules(){
+				var section_len= document.getElementById("tab").children.length;
+				var modules=new Array();
+				for (var i=0;i<section_len;i++){
+					var tmp_len = document.getElementById("tab").getElementsByTagName("section")[i].children.length-5;
+					for(var j=0;j<tmp_len;j++){
+						console.log(i,j);
+						console.log(document.getElementById("tab").children[i].getElementsByTagName("section")[j]);
+						modules.push(document.getElementById("tab").children[i].getElementsByTagName("section")[j].id);
+					}
+				}
+				return modules;
+			}
+			
+			function del_prof(prof){
+				if(confirm("Are you sure to delete this program? this action are unreturnable!")){
+					var sql='DELETE FROM `profiles` WHERE name="'+prof+'"';
+					if (window.XMLHttpRequest){
+						// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
+						xmlhttp=new XMLHttpRequest();
+					}else{
+						// IE6, IE5 浏览器执行代码
+						xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+					}
+					xmlhttp.onreadystatechange=function(){
+					
+						if (xmlhttp.readyState==4 && xmlhttp.status==200){
+							if(xmlhttp.responseText==""){
+							}else{
+								window.alert("delete success");
+								location.reload();
+							}
+						}
+					}
+					xmlhttp.open("GET","modify.php?sql="+sql+"&type='dp'&code="+code,true);
+					xmlhttp.send();
+				}
+			}
+			
+			function del_mod(mod){
+				if(confirm("Are you sure to delete this module? this action are unreturnable!")){
+					var sql='DELETE FROM `module` WHERE code="'+mod+'"';
+					if (window.XMLHttpRequest){
+						// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
+						xmlhttp=new XMLHttpRequest();
+					}else{
+						// IE6, IE5 浏览器执行代码
+						xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+					}
+					xmlhttp.onreadystatechange=function(){
+					
+						if (xmlhttp.readyState==4 && xmlhttp.status==200){
+							if(xmlhttp.responseText==""){
+							}else{
+								window.alert("delete success");
+								location.reload();
+							}
+						}
+					}
+					xmlhttp.open("GET","modify.php?sql="+sql+"&type='dm'&code="+code,true);
+					xmlhttp.send();
+				}
+			}
+			
+			function m_list(){
+				if (window.XMLHttpRequest){
+					// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
+					xmlhttp=new XMLHttpRequest();
+				}else{
+					// IE6, IE5 浏览器执行代码
+					xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+				}
+				xmlhttp.onreadystatechange=function(){
+				
+					if (xmlhttp.readyState==4 && xmlhttp.status==200){
+						if(xmlhttp.responseText==""){
+						}else{
+							document.getElementById("list").innerHTML+=xmlhttp.responseText;
+						}
+					}
+				}
+				xmlhttp.open("GET","getsitelist_mysql.php",true);
+				xmlhttp.send();
+			}
+			
+			function add(value){
+				var modules=get_modules();
+				var new_code=document.querySelector('[name="search_code"]').value;
+				
+				if(new_code=="" && !value){ // if empty
+					return;
+				}
+				
+				if(value){
+					if(typeof value == "string"){
+						if(modules.includes(value)){return;}
+						var sql="SELECT * FROM module WHERE code='"+value+"'";
+					}else{
+						var sql="SELECT * FROM module WHERE ";
+						if(modules.includes()){return;}
+						old_profile.push(value[0]);
+						for(var i=1;i<value.length;i++){
+							sql+="code='"+value[i]+"'";
+							if(i<(value.length-1)){sql+=" OR ";}
+						}
+					}
+				}else{
+					if(modules.includes(new_code)){return;}
+					var sql="SELECT * FROM module WHERE code='"+new_code+"'";
+					modules.push(new_code);
+				}
+				sql+=";";
+				
+				if (window.XMLHttpRequest){
+					// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
+					xmlhttp=new XMLHttpRequest();
+				}else{
+					// IE6, IE5 浏览器执行代码
+					xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+				}
+				xmlhttp.onreadystatechange=function(){
+				
+					if (xmlhttp.readyState==4 && xmlhttp.status==200){
+						if(xmlhttp.responseText==""){
+						}else{
+							document.getElementById("tab").innerHTML+=xmlhttp.responseText;
+							//data();
+							check();
+							if(typeof value !="object"){
+								//learning curve
+								var cs_nb = parseInt(get_prof(value+new_code).querySelector("#t_"+value+new_code).getElementsByTagName("tr")[2].getElementsByTagName("th")[1].innerHTML);
+								if(cs_nb == 0){
+										var few=parseInt(get_prof(value+new_code).querySelector("#t_"+value+new_code).getElementsByTagName("tr")[15].getElementsByTagName("th")[1].innerHTML);
+									}else{
+										var few=parseInt(get_prof(value+new_code).querySelector("#t_"+value+new_code).getElementsByTagName("tr")[16+cs_nb].getElementsByTagName("th")[1].innerHTML);
+								}
+								
+								document.getElementById("shpw_"+value+new_code).innerHTML+="<label />Difficulty: <input type='number'  id='Difficulty_"+value+new_code+"' value='1' oninput='updateChart("+'"'+value+new_code+'"'+','+'"'+value+new_code+'",'+few+");recover_detail_data("+'"'+value+new_code+'"'+','+'"'+value+new_code+'"'+");calcul_total_detail("+'"'+value+new_code+'"'+','+'"'+value+new_code+'"'+");draw_detail_final_graph("+'"'+value+new_code+'"'+','+'"'+value+new_code+'"'+");if(document.getElementById("+'"'+"SWD_"+value+new_code+'"'+").innerHTML!=null){load_swd("+'"'+value+new_code+'"'+','+'"'+value+new_code+'"'+");};' /><br>";
+								document.getElementById("shpw_"+value+new_code).innerHTML+="<label />Expected score: <input type='number' id='ES_"+value+new_code+"' value='60' oninput='updateChart("+'"'+value+new_code+'"'+','+'"'+value+new_code+'",'+few+");recover_detail_data("+'"'+value+new_code+'"'+','+'"'+value+new_code+'"'+");calcul_total_detail("+'"'+value+new_code+'"'+','+'"'+value+new_code+'"'+");draw_detail_final_graph("+'"'+value+new_code+'"'+','+'"'+value+new_code+'"'+");if(document.getElementById("+'"'+"SWD_"+value+new_code+'"'+").innerHTML!=null){load_swd("+'"'+value+new_code+'"'+','+'"'+value+new_code+'"'+");};'/><br>";
+								document.getElementById("shpw_"+value+new_code).innerHTML+="<label for='a'>Time management skill:</label><input type='range' id='Time_management_skill_"+value+new_code+"' name='Time_management_skill' min='0' max='10' step='0.01' value='2' oninput='updateChart("+'"'+value+new_code+'"'+','+'"'+value+new_code+'",'+few+");recover_detail_data("+'"'+value+new_code+'"'+','+'"'+value+new_code+'"'+");calcul_total_detail("+'"'+value+new_code+'"'+','+'"'+value+new_code+'"'+");draw_detail_final_graph("+'"'+value+new_code+'"'+','+'"'+value+new_code+'"'+");load_swd("+'"'+value+new_code+'"'+','+'"'+value+new_code+'"'+");' ><span id='a-value'></span>";
+								document.getElementById("shpw_"+value+new_code).innerHTML+="<div id='container"+value+new_code+"'></div>"
+								updateChart(value+new_code,value+new_code,few);
+								calcul_total_detail(value+new_code,value+new_code);
+								draw_detail_final_graph(value+new_code,value+new_code);
+								
+							}else{
+								for(var i=1;i<value.length;i++){
+									var code=value[i];
+									
+									var cs_nb = parseInt(get_prof(value[0]).querySelector("#t_"+code).getElementsByTagName("tr")[2].getElementsByTagName("th")[1].innerHTML);
+									if(cs_nb == 0){
+										var few=parseInt(get_prof(value[0]).querySelector("#"+code).getElementsByTagName("tr")[15].getElementsByTagName("th")[1].innerHTML);
+									}else{
+										var few=parseInt(get_prof(value[0]).querySelector("#"+code).getElementsByTagName("tr")[16+cs_nb].getElementsByTagName("th")[1].innerHTML);
+									}
+									/*document.getElementById("shpw_"+code).innerHTML+="<label />Difficulty: <input type='number'  id='Difficulty_"+code+"' value='1' onchange='updateChart("+'"'+code+'"'+','+'"'+value[0]+'",'+few+");recover_detail_data("+'"'+code+'"'+','+'"'+value[0]+'"'+");calcul_total_detail("+'"'+code+'"'+','+'"'+value[0]+'"'+");draw_detail_final_graph("+'"'+code+'"'+','+'"'+value[0]+'"'+");if(document.getElementById("+'"'+"SWD_"+code+'"'+").innerHTML!=null){load_swd("+'"'+code+'"'+','+'"'+value[0]+'"'+");};' ><br>";
+									document.getElementById("shpw_"+code).innerHTML+="<label />Expected score: <input type='number' id='ES_"+code+"' value='60' onchange='updateChart("+'"'+code+'"'+','+'"'+value[0]+'",'+few+");recover_detail_data("+'"'+code+'"'+','+'"'+value[0]+'"'+");calcul_total_detail("+'"'+code+'"'+','+'"'+value[0]+'"'+");draw_detail_final_graph("+'"'+code+'"'+','+'"'+value[0]+'"'+");if(document.getElementById("+'"'+"SWD_"+code+'"'+").innerHTML!=null){load_swd("+'"'+code+'"'+','+'"'+value[0]+'"'+");};'><br>";
+									document.getElementById("shpw_"+code).innerHTML+="<label for='a'>Time management skill:</label><input type='range' id='Time_management_skill_"+code+"' name='Time_management_skill' min='0' max='10' step='0.01' value='2' onchange='updateChart("+'"'+code+'"'+','+'"'+value[0]+'",'+few+");recover_detail_data("+'"'+code+'"'+','+'"'+value[0]+'"'+");calcul_total_detail("+'"'+code+'"'+','+'"'+value[0]+'"'+");draw_detail_final_graph("+'"'+code+'"'+','+'"'+value[0]+'"'+");if(document.getElementById("+'"'+"SWD_"+code+'"'+").innerHTML!=null){load_swd("+'"'+code+'"'+','+'"'+value[0]+'"'+");};' ><span id='a-value'></span>";
+									document.getElementById("shpw_"+code).innerHTML+="<div id='container"+code+"'></div>"
+									updateChart(code,value[0],few);*/
+									calcul_total_detail(code,value[0]);
+									/*draw_detail_final_graph(code,value[0]);*/
+									get_draw_prof_total_detail(value[0]);
+								
+								
+								}
+							
+							
+							}
+						}
+					}
+				}
+				if(typeof value=="object"){
+					xmlhttp.open("GET","getsite_mysql.php?code="+sql+"&prof="+value[0]+"&type=0",true);
+				}else{
+					xmlhttp.open("GET","getsite_mysql.php?code="+sql+"&prof="+value+new_code+"&type=1",true);
+				}
+				xmlhttp.send();
+			}
+			
+			function cs_calendar(){
+				if(get_modules().length==0){
+					window.location.href="cs_calendar.php?modules=0";
+				}else{
+					window.location.href="cs_calendar.php?modules="+JSON.stringify(get_modules());;
+				}
+			}
+			
+			
+			/*function draw_pain_score(code,pain_score_a,pain_score_b){
+
+			
+			//draw graph
+				
+				Highcharts.chart("pain_score_"+code, {
+
+					chart: {
+						type: 'line'
+					},
+
+					title: {
+						text: 'Pain Score'
+					},
+
+					legend: {
+						enabled: false
+					},
+
+					xAxis: {
+						categories: ['week 1', 'week 2', 'week 3', 'week 4', 'week 5', 'week 6', 'week 7', 'week 8', 'week 9', 'week 10', 'week 11', 'week 12', 'week 13', 'week 14', 'week 15'],
+					},
+
+					yAxis: {
+						title: {
+							text: 'value'
+						}
+					},
+
+					series: [{
+						name: 'pain score A',
+						data: pain_score_a
+					},{
+						name: 'pain score B',
+						data: pain_score_b
+					}]
+
+					,legend:{
+						layout: 'vertical',
+						align: 'right',
+						verticalAlign: 'middle',
+						borderWidth: 0
+					}
+				});
+				
+			}*/
+			
+			function draw_pain_score_and_deviation_value(code,pain_score_a,pain_score_b,d_val_a,d_val_b){
+				Highcharts.chart("pain_score_"+code, {
+
+					chart: {
+						type: 'line'
+					},
+
+					title: {
+						text: 'Pain Score'
+					},
+
+					legend: {
+						enabled: false
+					},
+
+					xAxis: {
+						categories: ['week 1', 'week 2', 'week 3', 'week 4', 'week 5', 'week 6', 'week 7', 'week 8', 'week 9', 'week 10', 'week 11', 'week 12', 'week 13', 'week 14', 'week 15'],
+					},
+
+					yAxis: {
+						title: {
+							text: 'value'
+						}
+					},
+
+					series: [{
+						name: 'pain score A',
+						data: pain_score_a
+					},{
+						name: 'pain score B',
+						data: pain_score_b
+					},{
+						name: "diviation value A",
+						data: d_val_a
+					},{
+						name: "diviation value B",
+						data: d_val_b
+					}]
+
+					,legend:{
+						layout: 'vertical',
+						align: 'right',
+						verticalAlign: 'middle',
+						borderWidth: 0
+					}
+				});
+				
+			
+			
+			
+			}
+			
+			function get_pain_score(total){
+				var pain_score=new Array();
+				pain_score.push(0);
+				for(var i=0;i<total.length-1;i++){
+					if(total[i]<total[i+1]){
+						pain_score.push(parseFloat(((total[i+1]-total[i])**2).toFixed(2)));
+					}else{
+						pain_score.push(0);
+					}
+				}
+			return pain_score;
+			}
+			
+			function get_deviation_value(mode,total){
+				var D_value=new Array();
+				for(var i=0;i<mode.length;i++){
+					D_value.push(parseFloat(((mode[i]-total[i])**2).toFixed(2)));
+				}
+				return D_value;
+			}
+			
+			/*function get_draw_diviation_value(code,mode,total){
+				var D_value=new Array();
+				for(var i=0;i<mode.length;i++){
+					console.log(mode[i],total[i]);
+					D_value.push(parseFloat(((mode[i]-total[i])**2).toFixed(2)));
+				}
+
+				var chart =  Highcharts.charts["pain_score_"+code];
+
+				if(chart.Series.length==2){
+					var series= [{
+						name: "diviation value A",
+						data: D_value
+					}];
+					for(var i=0;i<series.length;i++){
+						chart.addSeries(series[i]);
+					}
+				}
+					
+				if(chart.Series.length==3){
+					var series= [{
+						name: "diviation value B",
+						data: D_value
+					}];
+					for(var i=0;i<series.length;i++){
+						chart.addSeries(series[i]);
+					
+					}
+				}
+				console.log(series);
+				
+			}*/
+			
+			function recover_detail_data(code,prof){
+			
+				//predict_study_hrs
+				var obj = get_prof(prof).querySelector("#"+code);
+				obj = obj.getElementsByClassName("detail")[3];
+				var total =0;
+				for(var i=0;i<15;i++){
+					var val=g2_data[i];
+					if(val==null){
+						obj.getElementsByTagName("td")[i].innerHTML=0;
+					}else{
+						obj.getElementsByTagName("td")[i].innerHTML=val.toFixed(2);
+						total +=parseFloat(val.toFixed(2));
+					}
+					
+				}
+				obj.getElementsByTagName("td")[15].innerHTML=total.toFixed(2);
+				
+				
+				//CA_predict_hrs
+				var obj = get_prof(prof).querySelector("#"+code);
+				var nb_coursework=parseInt(obj.getElementsByTagName("tr")[2].getElementsByTagName("th")[1].innerHTML);
+
+				//A
+				var data_predict_A= new Array();
+				for(var i=0;i<15;i++){
+					data_predict_A.push(0);
+				}
+
+				var location = obj.getElementsByClassName("detail")[5];
+				total = 0;
+				
+				for(var j=0;j<nb_coursework;j++){//get all coursework data from group A
+					var dl=parseInt(obj.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[9].innerHTML.slice(5,-1));
+					var sw=parseInt(obj.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[7].innerHTML.slice(5,-1));
+					
+					var totalWeeks = dl - sw;
+					var totalHours = parseInt(obj.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[4].innerHTML)
+					var tmp_data = study_time_per_week(code,prof,totalWeeks,totalHours);
+					for(var i=0;i<15;i++){
+						if(i>=sw && i<dl){
+							var val=tmp_data[i-sw];
+							data_predict_A[i]+=parseFloat(val.toFixed(2));
+							total+=parseFloat(val.toFixed(2));
+						}
+					}
+				}
+				
+				for(var i=0;i<15;i++){//put all data on the detail table of group A
+					location.getElementsByTagName("td")[i].innerHTML=data_predict_A[i].toFixed(2);
+				}
+				location.getElementsByTagName("td")[15].innerHTML=total.toFixed(2);
+				
+				
+				//B
+				var data_predict_B= new Array();
+				for(var i=0;i<15;i++){
+					data_predict_B.push(0);
+				}
+				
+				
+				var obj = get_prof(prof).querySelector("#"+code);
+				var location = obj.getElementsByClassName("detail")[6];
+				total = 0;
+				
+				for(var j=0;j<nb_coursework;j++){//get all coursework data from group B
+					var dl=parseInt(obj.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[13].innerHTML.slice(5,-1));
+					var sw=parseInt(obj.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[11].innerHTML.slice(5,-1));
+					
+					var totalWeeks = dl - sw;
+					var totalHours = parseInt(obj.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[4].innerHTML)
+					var tmp_data = study_time_per_week(code,prof,totalWeeks,totalHours);
+					for(var i=0;i<15;i++){
+						if(i>=sw && i<dl){
+							var val=tmp_data[i-sw];
+							data_predict_B[i]+=parseFloat(val.toFixed(2));
+							total+=parseFloat(val.toFixed(2));
+						}
+					}
+				}
+				
+				for(var i=0;i<15;i++){//put all data on the detail table of group B
+					location.getElementsByTagName("td")[i].innerHTML=data_predict_B[i].toFixed(2);
+				}
+				location.getElementsByTagName("td")[15].innerHTML=total.toFixed(2);
+				
+				
+			}
+			
+			function calcul_total_detail(code,prof){
+				var obj = get_prof(prof).querySelector("#"+code);
+				var total = [0,0,0,0,0,0,0];
+				for(var i=0;i<15;i++){
+					var total_A=0;
+					var total_B=0;
+					
+					total_A+= parseFloat(obj.getElementsByClassName("detail")[2].getElementsByTagName("td")[i].innerHTML);
+					total_A+= parseFloat(obj.getElementsByClassName("detail")[3].getElementsByTagName("td")[i].innerHTML);
+					total_A+= parseFloat(obj.getElementsByClassName("detail")[4].getElementsByTagName("td")[i].innerHTML);
+					total_A+= parseFloat(obj.getElementsByClassName("detail")[5].getElementsByTagName("td")[i].innerHTML);
+					total_A+= parseFloat(obj.getElementsByClassName("detail")[7].getElementsByTagName("td")[i].innerHTML);
+					
+					total_B+= parseFloat(obj.getElementsByClassName("detail")[2].getElementsByTagName("td")[i].innerHTML);
+					total_B+= parseFloat(obj.getElementsByClassName("detail")[3].getElementsByTagName("td")[i].innerHTML);
+					total_B+= parseFloat(obj.getElementsByClassName("detail")[4].getElementsByTagName("td")[i].innerHTML);
+					total_B+= parseFloat(obj.getElementsByClassName("detail")[6].getElementsByTagName("td")[i].innerHTML);
+					total_B+= parseFloat(obj.getElementsByClassName("detail")[8].getElementsByTagName("td")[i].innerHTML);
+					
+					total[0]+= parseFloat(obj.getElementsByClassName("detail")[2].getElementsByTagName("td")[i].innerHTML);
+					total[1]+= parseFloat(obj.getElementsByClassName("detail")[3].getElementsByTagName("td")[i].innerHTML);
+					total[2]+= parseFloat(obj.getElementsByClassName("detail")[4].getElementsByTagName("td")[i].innerHTML);
+					total[3]+= parseFloat(obj.getElementsByClassName("detail")[5].getElementsByTagName("td")[i].innerHTML);
+					total[4]+= parseFloat(obj.getElementsByClassName("detail")[6].getElementsByTagName("td")[i].innerHTML);
+					total[5]+= parseFloat(obj.getElementsByClassName("detail")[7].getElementsByTagName("td")[i].innerHTML);
+					total[6]+= parseFloat(obj.getElementsByClassName("detail")[8].getElementsByTagName("td")[i].innerHTML);
+					
+					
+					obj.getElementsByClassName("detail")[9].getElementsByTagName("td")[i].innerHTML=total_A.toFixed(2);
+					obj.getElementsByClassName("detail")[10].getElementsByTagName("td")[i].innerHTML=total_B.toFixed(2);
+				}
+				for(var i=0;i<7;i++){
+					obj.getElementsByClassName("detail")[i+2].getElementsByTagName("td")[15].innerHTML=total[i].toFixed(2);
+				}
+			}
+			
+			function draw_detail_final_graph(code,prof){
+				var obj = get_prof(prof).querySelector("#"+code);
+				var series_A=[];
+				var series_B=[];
+				
+				for(var i=0;i<3;i++){
+					var tmp_data=[];
+					var tmp_name=obj.getElementsByClassName("detail")[2+i].getElementsByTagName("th")[0].innerHTML;
+					for(var j=0;j<15;j++){
+						tmp_data.push(parseFloat(obj.getElementsByClassName("detail")[2+i].getElementsByTagName("td")[j].innerHTML));
+					}
+					
+					series_A.push({name:tmp_name,data:tmp_data});
+					series_B.push({name:tmp_name,data:tmp_data});
+				}
+				
+				
+				for(var i=0;i<2;i++){
+					var tmp_data_A=[];
+					var tmp_data_B=[];
+					if(i==0){
+						var tmp_name_A=obj.getElementsByClassName("detail")[5].getElementsByTagName("th")[0].innerHTML;
+						var tmp_name_B=obj.getElementsByClassName("detail")[5].getElementsByTagName("th")[0].innerHTML;
+					
+					}else{
+						var tmp_name_A=obj.getElementsByClassName("detail")[7].getElementsByTagName("th")[0].innerHTML;
+						var tmp_name_B=obj.getElementsByClassName("detail")[7].getElementsByTagName("th")[0].innerHTML;
+					}
+					
+					for(var j=0;j<15;j++){
+						tmp_data_A.push(parseFloat(obj.getElementsByClassName("detail")[5+(i*2)].getElementsByTagName("td")[j].innerHTML));
+						tmp_data_B.push(parseFloat(obj.getElementsByClassName("detail")[6+(i*2)].getElementsByTagName("td")[j].innerHTML));
+					}
+					
+					series_A.push({name:tmp_name_A,data:tmp_data_A});
+					series_B.push({name:tmp_name_B,data:tmp_data_B});
+				}
+				
+				var total=get_total_detail(code,prof);
+				series_A.push({name:"Total",type:"line",data:total["A"],zIndex: 2});
+				series_B.push({name:"Total",type:"line",data:total["B"],zIndex: 2});
+				
+				//draw_pain_score(code,get_pain_score(total["A"]),get_pain_score(total["B"]));
+			
+				draw(series_A,"A_"+code,"final graph A");
+				draw(series_B,"B_"+code,"final graph B");
+			}
+			
+			function get_total_detail(code,prof){
+				var obj = get_prof(prof).querySelector("#"+code);
+				var tmp_a=[];
+				var tmp_b=[];
+				for(var i=0;i<15;i++){
+					tmp_a.push(parseFloat(obj.getElementsByClassName("detail")[9].getElementsByTagName("td")[i].innerHTML));
+					tmp_b.push(parseFloat(obj.getElementsByClassName("detail")[10].getElementsByTagName("td")[i].innerHTML));
+				}
+
+				return {"A":tmp_a,"B":tmp_b};
+			}
+			
+			function get_draw_prof_total_detail(prof){
+				var obj = get_prof(prof);
+				var series_A = [];
+				var series_B = [];
+				var total_data = new Array();
+				for (var i=0;i<obj.children.length-5;i++){
+					var code_section = obj.getElementsByTagName("section")[i].id;
+					var tmp_data = get_total_detail(code_section,prof);
+					if(i==0){
+						total_data = get_total_detail(code_section,prof);
+					}else{
+						for(var j=0;j<total_data["A"].length;j++){
+							total_data["A"][j]+=tmp_data["A"][j];
+							total_data["B"][j]+=tmp_data["B"][j];
+							
+						}
+					}
+					series_A.push({name: code_section, data: tmp_data["A"]});
+					series_B.push({name: code_section, data: tmp_data["B"]});
+				
+				}
+
+				series_A.push({name:"Total",type:"line",data:total_data["A"]});
+				series_B.push({name:"Total",type:"line",data:total_data["B"]});
+
+				draw(series_A,"total_"+prof+"_A","Total study hours group A");
+				draw(series_B,"total_"+prof+"_B","Total study hours group B");
+			}
+			
+			function log(prof){
+				var obj=get_prof(prof).querySelector('#log');
+				if(obj.innerHTML==""){
+					if (window.XMLHttpRequest){
+						// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
+						xmlhttp=new XMLHttpRequest();
+					}else{
+						// IE6, IE5 浏览器执行代码
+						xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+					}
+					xmlhttp.onreadystatechange=function(){
+					
+						if (xmlhttp.readyState==4 && xmlhttp.status==200){
+							if(xmlhttp.responseText==""){
+							}else{
+								obj.innerHTML=xmlhttp.responseText;
+							}
+						}
+					}
+
+					xmlhttp.open("GET","modify.php?sql=''&type=log&code="+prof,true);
+					xmlhttp.send();
+				}else{
+					obj.innerHTML="";
+				}
+			}
+			
+			function weeksAway(date) {
+				// Calculate the difference in milliseconds between the two dates
+				var diff = date.getTime() - startDate.getTime();
+			  
+				// Divide the difference by the number of milliseconds in a week
+				var weeks = diff / (1000 * 60 * 60 * 24 * 7);
+			  
+				// Return the number of weeks, rounded to the nearest whole number
+				return Math.round(weeks);
+			}
+			
+			function check(){
+				var obj=document.getElementById("tab");
+				for(var i=0;i<obj.childElementCount;i++){
+				
+					var targ=obj.getElementsByTagName("section")[i].getElementsByTagName("table")[0].getElementsByTagName("tr")[1];
+					var text="Warnning!! module "+obj.getElementsByTagName("section")[i].getElementsByTagName("table")[0].getElementsByTagName("tr")[0].getElementsByTagName("th")[0].innerHTML+"'s ";
+					var warn=false;
+					if(targ.getElementsByTagName("td")[0].innerHTML==""){
+						text+="name, ";
+						warn=true;
+					}
+					if(targ.getElementsByTagName("td")[1].innerHTML==""){
+						text+="co_odinator, ";
+						warn=true;
+					}
+					if(targ.getElementsByTagName("td")[2].innerHTML==""){
+						text+="semester, ";
+						warn=true;
+					}
+					if(targ.getElementsByTagName("td")[3].innerHTML==""){
+						text+="credits, ";
+						warn=true;
+					}
+					if(targ.getElementsByTagName("td")[4].innerHTML==""){
+						text+="CA(%), ";
+						warn=true;
+					}
+					
+					if(warn==true){
+						text+="is empty!"
+						window.alert(text);
+					}
+				}
+			}
+
+			function obj_unshow(code,prof){ //隐藏module或program
+				// localisation of element
+				var modules=get_modules();
+				
+				var tmp = get_prof(prof);
+				
+				// delete element
+				if(modules.includes(code)){
+					tmp.remove();
+				}else{
+					var r_obj = tmp.querySelector("#"+code);
+					r_obj.remove();
+				}
+				
+				if(modules.length==0 && old_profile.length==0){ //检测是否还有program或module需要显示
+					document.getElementById("graph").innerHTML='<div id="tab" ></div><br><br><div id="graph" style="margin-left:50px;margin-bottom:100px;" ><div id="A"></div><div id="B"></div></div>';
+					document.getElementById("feedback").style.display="none";
+				}else{	
+					if(auto_prof_remmove(prof)){;
+						//data();
+					}
+				}
+			}
+			
+			function auto_prof_remmove(prof){ //检测显示的program内部还有没有存在module
+				var tmp = get_prof(prof);
+					if(tmp.getElementsByTagName("table")[0] == null){
+						prof_remove(prof);
+						return 0;
+					}else{
+						return 1;
+					}
+			}
+			
+			function prof_remove(prof){ //auto_prof_remmove的子函数，移除空program显示框
+				var modules=get_modules();
+				var tmp = get_prof(prof);
+				tmp.remove();
+					
+				if(old_profile.includes(prof)){
+					old_profile.splice(old_profile.indexOf(prof),1);
+				}else{
+					modules.splice(modules.indexOf(prof),1);
+				}
+					
+				if(modules.length==0 && old_profile.length==0){
+					document.getElementById("feedback").style.display="none";
+				}else{
+					//data();
+				}
+			}
+			
+			function clean(){//清空所有正在显示的program和module
+				if(document.querySelector("#tab").innerHTML!=""){
+					document.querySelector("#tab").innerHTML="";
+					old_profile=[];
+				}
+			}
+			
+			function modify(code,prof){
+				
+				var obj = get_prof(prof).querySelector("#"+code);
+				
+				if(obj.getElementsByTagName("tr")[2].getElementsByTagName("th")[0].innerHTML=="0 coursework founded"){
+					var nb=4;
+					obj.getElementsByTagName("tr")[2].innerHTML="<th colspan='13'>total coursework:</th><th id='nb_coursework'>0</th>";
+				}else{
+					var nb=parseInt(obj.getElementsByTagName("tr")[2].getElementsByTagName("th")[1].innerHTML)+4;
+				}
+				
+				var tmp = obj.getElementsByTagName("tr")[0].getElementsByTagName("th")[0].innerHTML;
+				obj.getElementsByTagName("tr")[0].getElementsByTagName("th")[0].innerHTML="<input type='text' value='"+tmp+"' style='width:90%;'></input>";
+				
+				for(var i=0;i<5;i++){
+					if(i==3){
+						var tmp = obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[i].innerHTML;
+						obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[i].innerHTML="<input type='text' value='"+tmp+"' style='width:90%; background-color:transparent;' onchange='exp_hrs("+'"'+code+'"'+","+'"'+prof+'"'+","+1+");'></input>";
+					}else if(i==2){
+						var tmp = obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[i].innerHTML;
+						obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[i].innerHTML="<input type='number' value='"+tmp+"' style='width:90%; background-color:transparent;' ></input>";
+					}else{
+						var tmp = obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[i].innerHTML;
+						obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[i].innerHTML="<input type='text' value='"+tmp+"' style='width:90%; background-color:transparent;'></input>";
+					}
+				}
+				
+				for(var i=4;i<nb;i++){
+					var tmp = obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[0].innerHTML;
+					obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[0].innerHTML="<select value="+tmp+" selected><option value='Experiment'>Experiment</option><option value='Assignment'>Assignment</option><option value='Assessment'>Assessment</option></select>";
+					
+					var tmp = obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[1].innerHTML;
+					obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[1].innerHTML="<input type='text' value='"+tmp+"' style='width:80%; background-color:transparent;'></input>";
+
+					var tmp = obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[2].innerHTML;
+					obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[2].innerHTML="<input type='number' value='"+tmp+"' style='width:80%; background-color:transparent;' onchange='exp_hrs("+'"'+code+'"'+","+'"'+prof+'"'+","+i+");'></input>";
+					
+					var tmp = obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[4].innerHTML;
+					obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[4].innerHTML="<input type='number' value='"+tmp+"' style='width:80%; background-color:transparent;'></input>";
+					
+					var tmp = obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[5].innerHTML;
+					obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[5].innerHTML="<input type='number' value='"+tmp+"' style='width:80%; background-color:transparent;'></input>";
+					
+					var tmp = obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[6].innerHTML;
+					obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[6].innerHTML="<input type='date' value='"+tmp+"' style='width:80%; background-color:transparent;'></input>";
+					
+					var tmp = obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[8].innerHTML;
+					obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[8].innerHTML="<input type='date' value='"+tmp+"' style='width:80%; background-color:transparent;'></input>";
+					
+					var tmp = obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[10].innerHTML;
+					obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[10].innerHTML="<input type='date' value='"+tmp+"' style='width:80%; background-color:transparent;'></input>";
+					
+					var tmp = obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[12].innerHTML;
+					obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[12].innerHTML="<input type='date' value='"+tmp+"' style='width:80%; background-color:transparent;'></input>";
+
+					
+					obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[13].innerHTML="<button type='button' onclick='del_cs("+'"'+code+'"'+","+'"'+prof+'"'+","+i+")'>delete this cursework</button>";
+
+				}
+				var tmp = obj.getElementsByTagName("tr")[16+nb-4].getElementsByTagName("th")[1].innerHTML;
+				obj.getElementsByTagName("tr")[16+nb-4].getElementsByTagName("th")[1].innerHTML="<input type='number' value='"+tmp+"' style='width:80%;'></input>";
+				
+				obj.getElementsByTagName("tr")[0].getElementsByTagName("th")[6].getElementsByTagName("button")[2].style.display="none";
+				obj.getElementsByTagName("tr")[0].getElementsByTagName("th")[6].innerHTML+="<button type='button' onclick='reload("+'"'+code+'"'+","+'"'+prof+'"'+");'>cancel</button>";
+				obj.getElementsByTagName("tr")[0].getElementsByTagName("th")[6].innerHTML+="<button type='button' onclick='upload("+'"'+code+'"'+","+'"'+prof+'"'+");'>confirm & upload</button><br />";
+				obj.getElementsByTagName("tr")[0].getElementsByTagName("th")[6].innerHTML+="<button type='button' onclick='new_cs("+'"'+code+'"'+","+'"'+prof+'"'+");'>new coursework</button>";
+			}
+			
+			function modify_t(code,prof){
+				var obj = get_prof(prof).querySelector("#"+code);
+				var nb=parseInt(obj.getElementsByTagName("tr")[2].getElementsByTagName("th")[1].innerHTML)+6;
+				for(var i=0;i<15;i++){
+					var tmp= obj.getElementsByTagName("tr")[nb].getElementsByTagName("td")[i].innerHTML;
+					obj.getElementsByTagName("tr")[nb].getElementsByTagName("td")[i].innerHTML="<input type='number' value='"+tmp+"' style='width:90%; background-color:transparent;'></input>";
+					
+					var tmp= obj.getElementsByTagName("tr")[nb+1].getElementsByTagName("td")[i].innerHTML;
+					obj.getElementsByTagName("tr")[nb+1].getElementsByTagName("td")[i].innerHTML="<input type='number' value='"+tmp+"' style='width:90%; background-color:transparent;'></input>";
+					
+					var tmp= obj.getElementsByTagName("tr")[nb+2].getElementsByTagName("td")[i].innerHTML;
+					obj.getElementsByTagName("tr")[nb+2].getElementsByTagName("td")[i].innerHTML="<input type='number' value='"+tmp+"' style='width:90%; background-color:transparent;'></input>";
+					
+					var tmp= obj.getElementsByTagName("tr")[nb+3].getElementsByTagName("td")[i].innerHTML;
+					obj.getElementsByTagName("tr")[nb+3].getElementsByTagName("td")[i].innerHTML="<input type='number' value='"+tmp+"' style='width:90%; background-color:transparent;'></input>";
+					
+					var tmp= obj.getElementsByTagName("tr")[nb+4].getElementsByTagName("td")[i].innerHTML;
+					obj.getElementsByTagName("tr")[nb+4].getElementsByTagName("td")[i].innerHTML="<input type='number' value='"+tmp+"' style='width:90%; background-color:transparent;'></input>";
+					
+					var tmp= obj.getElementsByTagName("tr")[nb+5].getElementsByTagName("td")[i].innerHTML;
+					obj.getElementsByTagName("tr")[nb+5].getElementsByTagName("td")[i].innerHTML="<input type='number' value='"+tmp+"' style='width:90%; background-color:transparent;'></input>";
+					
+					var tmp= obj.getElementsByTagName("tr")[nb+6].getElementsByTagName("td")[i].innerHTML;
+					obj.getElementsByTagName("tr")[nb+6].getElementsByTagName("td")[i].innerHTML="<input type='number' value='"+tmp+"' style='width:90%; background-color:transparent;'></input>";
+					
+					var tmp= obj.getElementsByTagName("tr")[nb+7].getElementsByTagName("td")[i].innerHTML;
+					obj.getElementsByTagName("tr")[nb+7].getElementsByTagName("td")[i].innerHTML="<input type='number' value='"+tmp+"' style='width:90%; background-color:transparent;'></input>";
+					
+					var tmp= obj.getElementsByTagName("tr")[nb+8].getElementsByTagName("td")[i].innerHTML;
+					obj.getElementsByTagName("tr")[nb+8].getElementsByTagName("td")[i].innerHTML="<input type='number' value='"+tmp+"' style='width:90%; background-color:transparent;'></input>";
+				}
+				obj.getElementsByTagName("tr")[nb+9].getElementsByTagName("td")[0].getElementsByTagName("button")[0].style.display="none";
+				obj.getElementsByTagName("tr")[nb+9].getElementsByTagName("td")[0].getElementsByTagName("button")[1].style.display="";
+				obj.getElementsByTagName("tr")[nb+9].getElementsByTagName("td")[0].getElementsByTagName("button")[2].style.display="";
+			}
+			
+			function upload_fb(){
+				var module=document.getElementById("feedback").getElementsByTagName("select")[0].value;
+				var text=document.getElementById("feedback").getElementsByTagName("textarea")[0].value;
+				
+				if(module==""){
+					window.alert("please selecte a module to leave the feedback.");
+				}else if(text!=""){
+
+					if (window.XMLHttpRequest){
+						// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
+						xmlhttp=new XMLHttpRequest();
+					}else{
+						// IE6, IE5 浏览器执行代码
+						xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+					}
+					xmlhttp.onreadystatechange=function(){
+						if (xmlhttp.readyState==4 && xmlhttp.status==200){
+							window.alert("send feedback success.");
+						}
+					}
+					xmlhttp.open("GET","modify.php?sql="+text+"&code="+module+"&type=ufb",true);
+					xmlhttp.send();
+
+				}else{
+					window.alert("texte area is empty");
+				}
+					
+			}
+			
+			function s_h_feedback(){
+				if(document.getElementById("feedback").style.display=="none"){ 
+					document.getElementById("feedback").style.display=""; //show feedback
+					load_obj_fb();
+					load_fb();
+				}else{ //hide feedback
+					document.getElementById("feedback").style.display="none";
+					document.getElementById("content").innerHTML="";
+				}
+			}
+			
+			function load_fb(){
+				var modules=get_modules();
+				var code="";
+				for(var i=0;i<modules.length;i++){
+					code+=" code='"+modules[i]+"' ";
+					if(i<modules.length-1){
+						code+="OR";
+					}
+				}
+				console.log(modules,code);
+				
+
+				if (window.XMLHttpRequest){
+					// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
+					xmlhttp=new XMLHttpRequest();
+				}else{
+					// IE6, IE5 浏览器执行代码
+					xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+				}
+				xmlhttp.onreadystatechange=function(){
+					
+					if (xmlhttp.readyState==4 && xmlhttp.status==200){
+						if(xmlhttp.responseText!=""){
+							document.getElementById("content").innerHTML=xmlhttp.responseText;
+						}
+					}
+				}
+				xmlhttp.open("GET","modify.php?sql=''&type=fb&code="+code,true);
+				xmlhttp.send();
+			}
+			
+			function load_obj_fb(){
+				var modules=get_modules();
+				var obj=document.getElementById("feedback").getElementsByTagName("select")[0];
+				for(var i=0;i<modules.length;i++){
+					obj.innerHTML+="<option value='"+modules[i]+"' >"+modules[i]+"</option>"
+				}
+			}
+			
+			function upload_t(code,prof){
+				if(confirm("Confirm your update to database?")){
+					var obj = get_prof(prof).querySelector("#"+code);
+					var sql = 'UPDATE module SET contact_hrs="[';
+					var nb=parseInt(obj.getElementsByTagName("tr")[2].getElementsByTagName("th")[1].innerHTML)+6;
+					
+					var tmp = new Array();
+					for(var i=0;i<15;i++){
+						var val=obj.getElementsByTagName("tr")[nb].getElementsByTagName("td")[i].children[0].value;
+						if(val!=""){
+							sql+=val;
+						}else{
+							sql+=0;
+						}
+						if(i+1<15){
+							sql+=', ';
+						}
+					}
+					sql+=']", predict_hrs="[';
+					for(var i=0;i<15;i++){
+						var val=obj.getElementsByTagName("tr")[nb+1].getElementsByTagName("td")[i].children[0].value;
+						if(val!=""){
+							sql+=val;
+						}else{
+							sql+=0;
+						}
+						if(i+1<15){
+							sql+=', ';
+						}
+					}
+					sql+=']", extra_hrs="[';
+					for(var i=0;i<15;i++){	
+						var val=obj.getElementsByTagName("tr")[nb+2].getElementsByTagName("td")[i].children[0].value;
+						if(val!=""){
+							sql+=val;
+						}else{
+							sql+=0;
+						}
+						if(i+1<15){
+							sql+=', ';
+						}
+					}
+					sql+=']", CA_predict_time_A="[';
+					for(var i=0;i<15;i++){	
+						var val=obj.getElementsByTagName("tr")[nb+3].getElementsByTagName("td")[i].children[0].value;
+						if(val!=""){
+							sql+=val;
+						}else{
+							sql+=0;
+						}
+						if(i+1<15){
+							sql+=', ';
+						}
+					}
+					sql+=']", CA_predict_time_B="[';
+					for(var i=0;i<15;i++){	
+						var val=obj.getElementsByTagName("tr")[nb+4].getElementsByTagName("td")[i].children[0].value;
+						if(val!=""){
+							sql+=val;
+						}else{
+							sql+=0;
+						}
+						if(i+1<15){
+							sql+=', ';
+						}
+					}
+					sql+=']", CA_extra_time_A="[';
+					for(var i=0;i<15;i++){	
+						var val=obj.getElementsByTagName("tr")[nb+5].getElementsByTagName("td")[i].children[0].value;
+						if(val!=""){
+							sql+=val;
+						}else{
+							sql+=0;
+						}
+						if(i+1<15){
+							sql+=', ';
+						}
+					}
+					sql+=']", CA_extra_time_B="[';
+					for(var i=0;i<15;i++){	
+						var val=obj.getElementsByTagName("tr")[nb+6].getElementsByTagName("td")[i].children[0].value;
+						if(val!=""){
+							sql+=val;
+						}else{
+							sql+=0;
+						}
+						if(i+1<15){
+							sql+=', ';
+						}
+					}
+
+					sql+=']" WHERE code='+'"'+code+'"';
+					
+
+					if (window.XMLHttpRequest){
+						// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
+						xmlhttp=new XMLHttpRequest();
+					}else{
+						// IE6, IE5 浏览器执行代码
+						xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+					}
+					xmlhttp.onreadystatechange=function(){
+					
+						if (xmlhttp.readyState==4 && xmlhttp.status==200){
+						
+							var obj = get_prof(prof).querySelector("#"+code);
+							var nb=parseInt(obj.getElementsByTagName("tr")[2].getElementsByTagName("th")[1].innerHTML)+6;
+							for(var i=0;i<15;i++){
+								var tmp= obj.getElementsByTagName("tr")[nb].getElementsByTagName("td")[i].firstChild.value;
+								obj.getElementsByTagName("tr")[nb].getElementsByTagName("td")[i].innerHTML=tmp;
+								
+								var tmp= obj.getElementsByTagName("tr")[nb+1].getElementsByTagName("td")[i].firstChild.value;
+								obj.getElementsByTagName("tr")[nb+1].getElementsByTagName("td")[i].innerHTML=tmp;
+								
+								var tmp= obj.getElementsByTagName("tr")[nb+2].getElementsByTagName("td")[i].firstChild.value;
+								obj.getElementsByTagName("tr")[nb+2].getElementsByTagName("td")[i].innerHTML=tmp;
+								
+								var tmp= obj.getElementsByTagName("tr")[nb+3].getElementsByTagName("td")[i].firstChild.value;
+								obj.getElementsByTagName("tr")[nb+3].getElementsByTagName("td")[i].innerHTML=tmp;
+								
+								var tmp= obj.getElementsByTagName("tr")[nb+4].getElementsByTagName("td")[i].firstChild.value;
+								obj.getElementsByTagName("tr")[nb+4].getElementsByTagName("td")[i].innerHTML=tmp;
+								
+								var tmp= obj.getElementsByTagName("tr")[nb+5].getElementsByTagName("td")[i].firstChild.value;
+								obj.getElementsByTagName("tr")[nb+5].getElementsByTagName("td")[i].innerHTML=tmp;
+								
+								var tmp= obj.getElementsByTagName("tr")[nb+6].getElementsByTagName("td")[i].firstChild.value;
+								obj.getElementsByTagName("tr")[nb+6].getElementsByTagName("td")[i].innerHTML=tmp;
+								
+								var tmp= obj.getElementsByTagName("tr")[nb+7].getElementsByTagName("td")[i].firstChild.value;
+								obj.getElementsByTagName("tr")[nb+7].getElementsByTagName("td")[i].innerHTML=tmp;
+								
+								var tmp= obj.getElementsByTagName("tr")[nb+8].getElementsByTagName("td")[i].firstChild.value;
+								obj.getElementsByTagName("tr")[nb+8].getElementsByTagName("td")[i].innerHTML=tmp;
+							}
+							obj.getElementsByTagName("tr")[nb+9].getElementsByTagName("td")[0].getElementsByTagName("button")[0].style.display="";
+							obj.getElementsByTagName("tr")[nb+9].getElementsByTagName("td")[0].getElementsByTagName("button")[1].style.display="none";
+							obj.getElementsByTagName("tr")[nb+9].getElementsByTagName("td")[0].getElementsByTagName("button")[2].style.display="none";
+							
+							if(prof==code){
+								calcul_total_detail(code,prof);
+								draw_detail_final_graph(code,prof);
+							}
+						}
+					}
+
+					xmlhttp.open("GET","modify.php?sql="+sql+"&type=''&code="+code,true);
+					xmlhttp.send();
+				}
+				
+			}
+			
+			function s_h_detail(code,prof){
+				var obj=get_prof(prof).querySelector("#"+code);
+				if(obj.getElementsByClassName("detail")[0].style.display=="none"){
+					for(var i=0;i<12;i++){
+						obj.getElementsByClassName("detail")[i].style.display="";
+					}
+					obj.querySelector("#s_h_detail").innerHTML=("hide detail");
+				}else{
+					if(document.getElementById("det_"+code)){
+						hide_t(code,prof);
+					}
+					for(var i=0;i<12;i++){
+						obj.getElementsByClassName("detail")[i].style.display="none";
+					}
+					obj.querySelector("#s_h_detail").innerHTML=("hrs detail");
+				}
+			}
+			
+			function del_cs(code,prof,target){
+				if(confirm("Are you sure to delete this coursework?")){
+					var obj = get_prof(prof).querySelector("#"+code);
+					var nb = parseInt(obj.getElementsByTagName("tr")[2].getElementsByTagName("th")[1].innerHTML)+3;
+					var but = obj.getElementsByTagName("tr")[target].getElementsByTagName("td")[6].innerHTML;
+					obj.getElementsByTagName("tr")[target].remove();
+					obj.getElementsByTagName("tr")[2].getElementsByTagName("th")[1].innerHTML=parseInt(obj.getElementsByTagName("tr")[2].getElementsByTagName("th")[1].innerHTML)-1;
+					for(var i=target;i<nb;i++){
+						obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[6].innerHTML=but;
+						if(i+1<nb){
+							but = obj.getElementsByTagName("tr")[i+1].getElementsByTagName("td")[0].innerHTML;
+						}
+					}
+				}
+			}
+			
+			function new_cs(code,prof){
+				var obj = get_prof(prof).querySelector("#t_"+code);
+				var nb =parseInt(obj.getElementsByTagName("tr")[2].getElementsByTagName("th")[1].innerHTML);
+				obj.getElementsByTagName("tr")[2].getElementsByTagName("th")[1].innerHTML=nb+1;
+				if(nb==0){
+					obj.insertRow(nb+3).innerHTML="</tr><th colspan='2'>Type</th><th colspan='5'>Name</th><th colspan='2'>Weitghing</th><th colspan='2'>Expect_hrs</th><th colspan='2'>DL_Week A</th><th colspan='2'>DL_Week B</th></tr>";
+				}
+				var n = obj.insertRow(nb+4);
+				n.innerHTML+="<td colspan='2'><select><option value='Experiment'>Experiment</option><option value='Assignment'>Assignment</option><option value='Assessment'>Assessment</option></select></td><td colspan='2'><input type='text' value='' style='width:90%; background-color:transparent;'></input></td><td colspan='1'><input type='number' value='' style='width:90%; background-color:transparent;' onchange='exp_hrs("+'"'+code+'"'+","+'"'+prof+'"'+","+(nb+4)+");'></input></td><td colspan='1'></td><td colspan='1'><input type='number' value='' style='width:90%; background-color:transparent;'></input></td><td colspan='1'><input type='number' value='' style='width:90%; background-color:transparent;'></input></td><td><input type='date' value='' style='width:80%; background-color:transparent;'/></td><td></td><td><input type='date' value='' style='width:80%; background-color:transparent;'/></td><td></td><td><input type='date' value='' style='width:80%; background-color:transparent;'/></td><td></td><td><input type='date' value='' style='width:80%; background-color:transparent;'/></td><td></td><td colspan='2'><button type='button' onclick='del_cs("+'"'+code+'"'+","+'"'+prof+'"'+","+(nb+4)+")'>delete this cursework</button></td>";
+			}
+			
+		
+			
+			function exp_hrs(code,prof,n){
+
+				var obj = get_prof(prof).querySelector("#"+code);
+				var nb=parseInt(obj.getElementsByTagName("tr")[2].getElementsByTagName("th")[1].innerHTML)+4;
+				if(n==1){
+					for(var i=4;i<nb;i++){
+						var credits = parseFloat(obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[3].getElementsByTagName("input")[0].value);
+						var weitghing = parseInt(obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[2].getElementsByTagName("input")[0].value);
+						obj.getElementsByTagName("tr")[i].getElementsByTagName("td")[3].innerHTML= credits*weitghing/10;
+					}
+				}else{
+					var credits = parseFloat(obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[3].getElementsByTagName("input")[0].value);
+					var weitghing = parseInt(obj.getElementsByTagName("tr")[n].getElementsByTagName("td")[2].getElementsByTagName("input")[0].value);
+					obj.getElementsByTagName("tr")[n].getElementsByTagName("td")[3].innerHTML= credits*weitghing/10;
+				}
+			}
+			
+			function reload(code,prof){
+			
+				var sql="SELECT * FROM module WHERE code='"+code+"';";
+				
+				var len = document.getElementById("tab").children.length;
+				for (var i=0;i<len;i++){
+					var tmp = document.getElementById("tab").getElementsByTagName("section")[i];
+					if(tmp.id==prof){
+						break;
+					}
+				}
+				var obj = get_prof(prof).querySelector("#"+code).children[0];
+				
+				if (window.XMLHttpRequest){
+					// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
+					xmlhttp=new XMLHttpRequest();
+				}else{
+					// IE6, IE5 浏览器执行代码
+					xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+				}
+				xmlhttp.onreadystatechange=function(){
+				
+					if (xmlhttp.readyState==4 && xmlhttp.status==200){
+						if(xmlhttp.responseText==""){
+						}else{
+							obj.innerHTML=xmlhttp.responseText;
+							//data();
+							//recover_detail_data(code,prof);
+							if(code==prof){
+								var cs_nb = parseInt(get_prof(prof).querySelector("#"+code).getElementsByTagName("tr")[2].getElementsByTagName("th")[1].innerHTML);
+								var few=parseInt(get_prof(prof).querySelector("#"+code).getElementsByTagName("tr")[16+cs_nb].getElementsByTagName("th")[1].innerHTML);
+								updateChart(code,prof,few);
+								calcul_total_detail(code,prof);
+								draw_detail_final_graph(code,prof);
+							}
+						}
+					}
+				}
+
+				xmlhttp.open("GET","getsite_mysql.php?code="+sql+"&prof="+prof+"&type=3",true);
+				xmlhttp.send();
+			}
+			
+			function upload(code,prof){
+				if(confirm("Confirm your update to database?")){
+					var obj = get_prof(prof).querySelector("#"+code);
+					
+					
+					var sql = "UPDATE module SET ";
+					var nb_coursework=parseInt(obj.getElementsByTagName("tr")[2].getElementsByTagName("th")[1].innerHTML);
+					var j=nb_coursework;
+					
+					var n_prog = new Array();
+					sql+="code="+'"'+obj.getElementsByTagName("tr")[0].getElementsByTagName("th")[0].children[0].value+'", ';
+					sql+="name="+'"'+obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[0].children[0].value+'", ';
+					sql+="co_odinator="+'"'+obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[1].children[0].value+'", ';
+					sql+="semester="+'"'+obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[2].children[0].value+'", ';
+					sql+="Credits="+'"'+obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[3].children[0].value+'", ';
+					sql+="CA="+'"'+obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[4].children[0].value+'", ';
+					
+					for(var i=0;i<j;i++){  //重新计算cs数量，不计无效空行
+						if((obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[1].children[0].value=="")
+							&& (obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[2].children[0].value=="" || obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[2].children[0].value==0)
+							&& (obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[3].innerHTML=="" || obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[3].innerHTML==0)
+							&& (obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[4].children[0].value=="" || obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[4].children[0].value==0)
+							&& (obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[5].children[0].value=="" || obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[5].children[0].value==0)){
+							obj.getElementsByTagName("tr")[4+i].remove();
+							i--;
+							j--;
+							nb_coursework--;
+						}
+					}
+					
+					sql+="Nb_of_Coursework="+'"'+nb_coursework+'"';
+					var cs=[];
+					if(nb_coursework>0){
+						sql+=', ';
+						for(var i=0;i<nb_coursework;i++){
+							cs.push({"type":obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[0].children[0].value,
+							"name":obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[1].children[0].value,
+							"weitghing":parseInt(obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[2].children[0].value),
+							"expct_hrs":parseInt(obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[3].innerHTML),
+							"predict_hrs":parseInt(obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[4].children[0].value),
+							"extra_hrs":parseInt(obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[5].children[0].value),
+							"SW_A":obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[6].children[0].value,
+							"DL_A":obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[8].children[0].value,
+							"SW_B":obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[10].children[0].value,
+							"DL_B":obj.getElementsByTagName("tr")[4+i].getElementsByTagName("td")[12].children[0].value,
+							});
+						}
+						sql+="Course_work="+"'"+JSON.stringify(cs)+"'";
+						
+					}else{
+						sql+="Course_work=NULL";
+					}
+					
+					sql+=", Final_Exam_Week='"+parseInt(obj.getElementsByTagName("tr")[16+i].getElementsByTagName("th")[1].children[0].value)+"'";
+
+					sql+=" WHERE code="+'"'+code+'"';
+					if (window.XMLHttpRequest){
+						// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
+						xmlhttp=new XMLHttpRequest();
+					}else{
+						// IE6, IE5 浏览器执行代码
+						xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+					}
+					xmlhttp.onreadystatechange=function(){
+					
+						if (xmlhttp.readyState==4 && xmlhttp.status==200){
+							reload(code,prof);
+						}
+					}
+
+					xmlhttp.open("GET","modify.php?sql="+sql+"&type=''&code="+code,true);
+					xmlhttp.send();
+				}
+			}
+			
+			function data(){
+				var modules=get_modules();
+				var ct=0; //compt
+				var series_A = [];
+				var series_B = [];
+				for(var i=0;i<modules.length;i++){
+					code=modules[i];
+					var obj=document.getElementById(code).getElementsByTagName("tbody")[0];
+					
+					if(document.getElementById(code).getElementsByTagName("tr")[2].getElementsByTagName("th")[0].innerHTML=="0 coursework founded"){ //check existance of cs
+						ct++;
+						if(ct>=modules.length+old_profile.length){
+							return;
+						}
+						break;
+					}
+					
+					var nb_coursework=parseInt(document.getElementById(code).querySelector("#nb_coursework").innerHTML);
+					for(var j=0;j<nb_coursework;j++){
+						var n={name:"",data:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]};
+						var m={name:"",data:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]};
+						var hrs=parseInt(obj.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[3].innerHTML);
+						if(hrs != 0 || hrs != null){
+							n.name=code+" "+obj.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[1].innerHTML; //single module group A
+							if(obj.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[4].innerHTML!=" "){
+								n.data[weeksAway(new Date(obj.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[4].innerHTML))-1]+=hrs;
+							}else if(obj.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[5].innerHTML!=" "){
+								n.data[parseInt(obj.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[5].innerHTML.slice(6,-1))-1]+=hrs;
+							}
+							series_A.push(n);
+							
+							m.name=code+" "+obj.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[1].innerHTML;//single module group B
+							if(obj.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[6].innerHTML!=" "){
+								m.data[weeksAway(new Date(obj.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[6].innerHTML))-1]+=hrs;
+							}else if(obj.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[7].innerHTML!=" "){
+								m.data[parseInt(obj.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[7].innerHTML.slice(6,-1))-1]+=hrs;
+							}
+							series_B.push(m);
+						}
+					}
+				}
+				
+
+				for(var i=0;i<old_profile.length;i++){
+					var t={name:"",data:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]};
+					var obj=get_prof(old_profile[i]);
+					var len =get_prof(old_profile[i]).childElementCount;
+					var modulecount = len-3;
+					t.name=old_profile[i];
+					
+
+					for(var j=0;j<modulecount;j++){
+						var module=obj.getElementsByTagName("table")[j];
+						
+						if(module.getElementsByTagName("tr")[2].getElementsByTagName("th")[0].innerHTML=="0 coursework founded"){ //check existance of cs
+							ct++;
+							if(ct>=modules.length+old_profile.length){
+								return;
+							}
+							break;
+						}
+						
+						var nb_coursework=parseInt(module.querySelector("#nb_coursework").innerHTML);
+						var n={name:"",data:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]};
+						var m={name:"",data:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]};
+						m.name=module.id;
+						n.name=module.id;
+						
+						
+						for(var k=0;k<nb_coursework;k++){
+							
+							var hrs=parseInt(module.getElementsByTagName("tr")[4+k].getElementsByTagName("td")[3].innerHTML);
+							if(hrs != 0 || hrs != null){
+								if(module.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[6].innerHTML!=" "){ //program module group A
+									n.data[weeksAway(new Date(module.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[4].innerHTML))-1]+=hrs;
+								}else if(module.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[7].innerHTML!=" "){
+									n.data[parseInt(module.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[7].innerHTML.slice(6,-1))-1]+=hrs;
+								}
+							
+							
+								if(module.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[6].innerHTML!=" "){ //program module group B
+									m.data[weeksAway(new Date(module.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[6].innerHTML))-1]+=hrs;
+								}else if(module.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[7].innerHTML!=" "){
+									m.data[parseInt(module.getElementsByTagName("tr")[4+j].getElementsByTagName("td")[7].innerHTML.slice(6,-1))-1]+=hrs;
+								}
+							}
+						}
+						series_B.push(m);
+						series_A.push(n);
+					}
+
+					//t 是准备好的 total 数据
+				}
+				draw(series_A,"A",'SWEAT group A');
+				draw(series_B,"B",'SWEAT group B');
+			}
+			
+			//learning curve
+			function reverse_learning_curve(A,y){
+				var x=-Math.log(y**(-1/A)-1);
+				return x.toFixed(2);
+			}
+			
+			function private_study_persentage(code,prof){
+				var obj=get_prof(prof).querySelector("#"+code);
+				var pers = (parseFloat(reverse_learning_curve(parseFloat(document.getElementById("Difficulty_"+code).value),parseFloat(document.getElementById("ES_"+code).value)/100))+3)/6;
+				var cred = parseFloat(obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[3].innerHTML);
+				var Ca = parseFloat(obj.getElementsByTagName("tr")[1].getElementsByTagName("td")[4].innerHTML)/100;
+				var ps =pers*cred*10*(1-Ca);
+				return ps.toFixed(0);
+			}
+
+			function f(x, a) {
+				return Math.pow(1 + Math.exp(-x), -a);
+			}
+			
+			function study_time_per_week(code,prof,totalWeeks,totalHours){
+				const a = Number(document.getElementById('Time_management_skill_'+code).value);
+				if(totalHours==-1){
+					totalHours = private_study_persentage(code,prof);
+				}
+
+				const Data = [];
+				for (let i = 0; i < totalWeeks; i++) {
+					const x = i / (totalWeeks - 1);
+					const hours = f(x, a);
+					Data.push(hours);
+				}
+				return cal(Data,totalHours);
+			}
+
+			function updateChart(code,prof,totalWeeks){
+			
+				g2_data = study_time_per_week(code,prof,totalWeeks,-1);
+
+				Highcharts.chart('container'+code, {
+					title: {
+						text: 'Study Hours per Week'
+					},
+					xAxis: {
+						categories: Array.from({length: totalWeeks}, (_, i) => `Week ${i+1}`)
+					},
+					yAxis: {
+						title: {
+							text: 'Hours'
+							}
+					},
+					series: [{
+						id : 'data_g2',
+						name: 'Study Hours',
+						data: g2_data
+					}]
+				});
+			}
+
+			function load_swd(code,prof){
+			
+				var total_d=get_total_detail(code,prof);
+				
+					
+				if(document.getElementById("SWD_"+prof).innerHTML==""){
+					if (window.XMLHttpRequest){
+						// IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
+						xmlhttp=new XMLHttpRequest();
+					}else{
+						// IE6, IE5 浏览器执行代码
+						xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+					}
+					xmlhttp.onreadystatechange=function(){
+						if (xmlhttp.readyState==4 && xmlhttp.status==200){
+							var data=JSON.parse(xmlhttp.responseText);
+							var arranged_data= new Array();
+							var mode_data=new Array();
+								
+							for(var i=0;i<15;i++){
+								var week_data= new Array();
+								
+								data[i].sort(function(a,b){return a-b});
+								
+								week_data.push(data[i][0]);
+								week_data.push(data[i][parseInt(data[i].length*0.25)]);
+								week_data.push(data[i][parseInt(data[i].length*0.50)]);
+								week_data.push(data[i][parseInt(data[i].length*0.75)]);
+								week_data.push(data[i][parseInt(data[i].length)-1]);
+								
+								
+								var len = data[i].length;
+								var count = 1;
+								var tmp_count = 0;
+								var numb = parseInt(data[i][0]);
+								var tmp_numb = 0;
+								for(var j=1;j<len;j++){
+									if(parseInt(data[i][j])==numb){
+										count++;
+									}else{
+										if(tmp_count<count){
+											tmp_count=count;
+											tmp_numb=numb;
+											numb = parseInt(data[i][j]);
+											count = 1;
+										}else if(tmp_count>count){
+											numb = parseInt(data[i][j]);
+											count = 1;
+										}else{
+											tmp_numb=(tmp_numb+numb)/2;
+											numb = parseInt(data[i][j]);
+											count = 1;
+										}
+									}
+								}
+								if(tmp_count<count){
+									mode_data.push(numb);
+								}else{
+									mode_data.push(tmp_numb);
+								}
+									
+								
+								arranged_data.push(week_data);
+							}
+								
+							draw_swd(prof,arranged_data,mode_data,total_d["A"],total_d["B"]);
+								
+							draw_pain_score_and_deviation_value(code,get_pain_score(total_d["A"]),get_pain_score(total_d["B"]),get_deviation_value(mode_data,total_d["A"]),get_deviation_value(mode_data,total_d["B"]));
+
+						}
+					}
+					xmlhttp.open("GET","import_studient.php",true);
+					xmlhttp.send();
+				}else{
+					document.getElementById("SWD_"+prof).innerHTML="";
+					document.getElementById("pain_score_"+code).innerHTML="";
+				}
+				
+			}
+	
+			function draw_swd(prof,arranged_data,mode_data,total_a,total_b){
+	
+				Highcharts.chart("SWD_"+prof, {
+
+					chart: {
+						type: 'boxplot'
+					},
+
+					title: {
+						text: 'student worklord distribution'
+					},
+
+					legend: {
+						enabled: false
+					},
+
+					xAxis: {
+						categories: ['week 1', 'week 2', 'week 3', 'week 4', 'week 5', 'week 6', 'week 7', 'week 8', 'week 9', 'week 10', 'week 11', 'week 12', 'week 13', 'week 14', 'week 15'],
+					},
+
+					yAxis: {
+						title: {
+							text: 'hours'
+						},
+						plotLines: [{
+							value: 932,
+							color: 'red',
+							width: 1,
+							label: {
+								text: 'Theoretical mean: 932',
+								align: 'center',
+								style: {
+									color: 'gray'
+								}
+							}
+						}]
+					},
+
+					series: [{
+						name: 'Boxplot',
+						data: arranged_data,
+						tooltip: {
+							headerFormat: '<em>Experiment No {point.key}</em><br/>'
+						}
+					},{
+						name: 'mode',
+						type: 'line',
+						data: mode_data
+					},{
+						name: 'total study hours A',
+						type: 'line',
+						data: total_a
+					},{
+						name: 'total study hours B',
+						type: 'line',
+						data: total_b
+					}]
+
+					,legend:{
+						layout: 'vertical',
+						align: 'right',
+						verticalAlign: 'middle',
+						borderWidth: 0
+					}
+				});
+			}
+
+			function cal(data,totalHours){
+				var sum=0;
+				var data_out = new Array();
+				for(var i=0;i<data.length;i++){
+					sum+=data[i];
+				}
+				
+				for(var i=0;i<data.length;i++){
+					data_out.push(data[i]/sum*totalHours);
+				}
+				return data_out;
+			
+			
+			}
+			
+			function hide_t(code,prof){
+				var obj = get_prof(prof).querySelector("#"+code);
+				obj.getElementsByClassName('detail')[5].getElementsByTagName('button')[1].style.display='';
+				obj.getElementsByClassName('detail')[5].getElementsByTagName('button')[2].style.display='none';
+				document.getElementById('det_'+code).remove();
+			}
+						
+			function draw(series,loc,tit){
+				var chart = {
+					type: 'area'
+				};
+			
+				var title = {
+					text: tit
+				};
+				
+				var plotOptions = {
+					area: {
+						stacking: 'normal',
+						lineColor: '#666666',
+						lineWidth: 1,
+						marker: {
+							lineWidth: 1,
+							lineColor: '#666666'
+						}
+					}
+				};
+					
+				var subtitle ={
+					text: ''
+				};
+			
+
+				var xAxis = {
+					categories: ['week 1','week 2','week 3','week 4','week 5','week 6','week 7'
+					,'week 8','week 9','week 10','week 11','week 12','week 13','week 14','week 15'
+					,'week 16']
+				};
+				
+				var yAxis = {
+					title: {
+						text: 'hours'
+					},
+					poplotLines:[{
+						value: 0,
+						width: 1,
+						color: '#808080'
+					}],
+					categories: ['0','1','2','3','4','5','6','7','8','9','10','11','12','13','14']
+				};
+					
+				var tooltip = {
+					valueSuffix: 'hrs'
+					}
+
+				var legend = {
+					layout: 'vertical',
+					align: 'right',
+					verticalAlign: 'middle',
+					borderWidth: 0
+					};
+					
+
+
+				var json ={};
+				json.chart = chart;
+				json.title = title;
+				json.plotOptions = plotOptions;
+				json.subtitle = subtitle;
+				json.xAxis = xAxis;
+				json.yAxis = yAxis;
+				json.tooltip = tooltip;
+				json.legend = legend;
+				json.series = series;
+				
+				Highcharts.chart(loc,json);
+			}
+
+		</script>	
+		<!-- set website title -->
+		<title>test</title>
+        
+    </head>
+    <body >
+		<!-- header -->
+        <header style="width: 100%; height: 100px; text-align: center;">
+			<img src="img/full-colour.svg" style="max-height:100px;max-width:200px;display:flex;content-justify:left;margin-top:50px;margin-left:100px;">
+        </header>
+		<h2 style="width:100%;height:20px;background-color:#212b58;"></h2>
+		<main style="display:flex;">
+			<nav style="flex-direction:column; width: 250px; background-color: white;">
+				<form style="margin-left:10px;">
+					<input type="text" style="width:90%;" name="search_code" />
+					<button style='background-color:white;border-bottom:1px solid #1E1E1E;' type="button" onclick="add()">search & add</button>
+					<button style='background-color:white;border-bottom:1px solid #1E1E1E;' type="button" onclick="clean()">clear</button>
+					<button style='margin-right:10px;background-color:white;border-bottom:1px solid #1E1E1E;' type='button' onclick="cs_calendar()">coursework calandar</button>
+				</form>
+				<section style="margin-left:10px;border-bottom:1px solid #1E1E1E;" id="list">
+				</section>
+				</br></br>
+			</nav>
+			<section id="data" style="margin-left:150px;margin-right:50px; min-height:500px;width:65%;">
+				<!-- <div id="calandar" style="margin-bottom:100px;max-width:200px;max-height:500px; display=none;"></div> -->
+				<div id="tab" ></div>
+				<div id="feedback" style="display:none">
+					<h3>Feedback</h3>
+					<div id="content"></div>
+					<textarea rows='10' cols='100'></textarea></br>
+					<label>Leave this feedback for </label>
+					<select>
+					</select>
+					<button type='button' onclick='upload_fb()'>send</button>
+				</div>
+			</section>
+		</main>
+		<footer style="background-color:black; width:100%;height:100px;"></footer>
+    </body>
+</html>
