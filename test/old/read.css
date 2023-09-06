@@ -1,0 +1,16 @@
+
+
+table,th,td{
+	text-align:center;
+	border:solid;
+	border-collapse:collapse;
+}
+
+th{
+	background-color:#212b58;
+	color:white;
+}
+
+button:hover{
+	
+}
